@@ -1,51 +1,46 @@
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
+const crypto = require('crypto');
 
-const contactsPath = path.resolve('./db/contacts.json');
-
-function listContacts() {
-    fs.readFile(contactsPath, 'utf8', (error, data) => {
-        if (error) {
-           return console.error(error);
-        }
-
-        const contacts = JSON.parse(data);
-        console.log('List contacts:');
-        console.table(contacts);
-  })
+const readContacts = async () => {
+    const contacts = await fs.readFile(
+        path.join(__dirname, 'db', 'contacts.json'),
+        'utf8',
+    )
+    const result = JSON.parse(contacts);
+    return result;
 }
 
-function getContactById(contactId) {
-    fs.readFile(contactsPath, 'utf8', (error, data) => {
-        if (error) {
-            return console.error(error);
-        }
-
-        const contacts = JSON.parse(data);
-
-        const contact = contacts.find(contact => {
-            if (contact.id === contactId) {
-                console.log(`Get contact by id ${contactId}:`);
-                console.table(contact);
-                return contact;
-            }
-        });
-      
-        if (contact == null) {
-            console.log(`contact ${contactId} not found`)
-        }
-    });
+const listContacts = async() => {
+    const contacts = await readContacts();
+    return contacts;
 }
 
-// function removeContact(contactId) {
-//   // ...твой код
-// }
+const getContactById = async(contactId) => {
+    const contacts = await readContacts();
+    // const [contactById] = contacts.filter(contact => contact.id === contactId);
+    const contactById = contacts.find(contact => contact.id === contactId);
+    return contactById;
+}
 
-// function addContact(name, email, phone) {
-//   // ...твой код
-// }
+const removeContact = async (contactId) => {
+    const contacts = await readContacts();
+    const newContacts = contacts.filter(contact => contact.id !== contactId);
+    return newContacts;  
+}
+
+const addContact = async(name, email, phone) => {
+    const contacts = await readContacts();
+    const newContact = { name, email, phone, id: crypto.randomUUID() };
+    contacts.push(newContact);
+    await fs.writeFile(path.join(__dirname, 'db', 'contacts.json'),
+        JSON.stringify(contacts, null, 2));
+    return newContact;
+}
 
 module.exports = {
     listContacts,
     getContactById,
+    removeContact,
+    addContact
 }
