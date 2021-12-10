@@ -1,6 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const crypto = require('crypto');
+const chalk = require('chalk');
 
 const readContacts = async () => {
     const contacts = await fs.readFile(
@@ -18,15 +19,23 @@ const listContacts = async() => {
 
 const getContactById = async(contactId) => {
     const contacts = await readContacts();
-    // const [contactById] = contacts.filter(contact => contact.id === contactId);
     const contactById = contacts.find(contact => contact.id === contactId);
     return contactById;
 }
 
 const removeContact = async (contactId) => {
     const contacts = await readContacts();
+
     const newContacts = contacts.filter(contact => contact.id !== contactId);
-    return newContacts;  
+    if (newContacts.length === contacts.length) {
+        console.log(chalk.red(`Contact by id ${contactId} not found and NOT remove`));
+    } else {
+        console.log(chalk.green(`Contact by id ${contactId} remove:`));
+        await fs.writeFile(path.join(__dirname, 'db', 'contacts.json'),
+            JSON.stringify(newContacts, null, 2));
+    }
+    return newContacts;
+    
 }
 
 const addContact = async(name, email, phone) => {
